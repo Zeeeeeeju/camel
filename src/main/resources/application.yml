@@ -1,0 +1,22 @@
+
+server:
+  port: 8992
+
+spring:
+  activemq:
+    broker-url: tcp://localhost:61616
+    user: admin
+    password: admin
+    pool:
+      enabled: true
+      max-connections: 20
+
+solace:
+  jms:
+    host: smf://10.222.145.189:55555
+    msg-vpn: default
+    client-username: default
+    client-password: default
+camel:
+  springboot:
+    main-run-controller: true
