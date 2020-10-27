@@ -1,8 +1,10 @@
 package com.zeju.demo.camel.camel.route;
 
+import com.zeju.demo.camel.camel.bean.SplitBean;
 import com.zeju.demo.camel.camel.processor.ProcessorA;
 import com.zeju.demo.camel.camel.processor.ProcessorB;
 import com.zeju.demo.camel.camel.processor.ProcessorC;
+import com.zeju.demo.camel.camel.strategy.MyAggregateStrategy;
 import org.apache.camel.ExchangePattern;
 import org.apache.camel.LoggingLevel;
 import org.apache.camel.builder.RouteBuilder;
@@ -26,7 +28,9 @@ public class SolaceToActiveMQQueueRoute extends RouteBuilder {
                 .to("direct:directRouteC")
                 .to("direct:directRouteD")
                 .to("direct:dynamicRoute")
-                .to("direct:beanService");
+                .to("direct:beanService")
+                .to("direct:aggregationA")
+                .to("direct:aggregationB");
 
         from("direct:directRouteA")
                 .to("activemq:queue2");
@@ -64,6 +68,15 @@ public class SolaceToActiveMQQueueRoute extends RouteBuilder {
 
         //调用方法
         from("direct:beanService").bean("camelService","test");
+
+        //拆分消息
+        from("solace:test2")
+                .split().method(SplitBean.class,"splitMessage")
+                .to("solace:test-result");
+        //聚合消息
+        from("direct:aggregationA").to("direct:aggregation");
+        from("direct:aggregationB").to("direct:aggregation");
+        from("direct:aggregation").aggregate(header("messageId"),new MyAggregateStrategy()).completionSize(2).to("solace:test-result").end();
 
     }
 }
